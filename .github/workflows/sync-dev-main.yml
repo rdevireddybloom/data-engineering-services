@@ -172,7 +172,7 @@ jobs:
             "title": "data-engineering-services Repo Sync - BLOCKED",
             "sections": [
               {
-                "text": "The sync has been **stopped** because **${FILE_COUNT} file(s)** have code differences between main and dev.\\n\\n**Changed files:**\\n${CHANGED_FILES}\\n\\nPlease resolve these differences before the next scheduled sync.\\n\\n[View full comparison](${REPO_URL}/compare/main...dev)"
+                "text": "The sync has been **stopped** because **${FILE_COUNT} file(s)** have code differences between main and dev.\\n\\n**Changed files:**\\n${CHANGED_FILES}\\n\\nPlease resolve these differences and rerun the Sync workflow.\\n\\n[View full comparison](${REPO_URL}/compare/main...dev)"
               }
             ]
           }
@@ -213,7 +213,7 @@ jobs:
             "title": "data-engineering-services Repo Sync - Complete",
             "sections": [
               {
-                "text": "The dev branch has been force-synced to match main at commit **${MAIN_SHA}**.\\n\\nDev and main are now identical.\\n\\n[View repository](${REPO_URL})"
+                "text": "The dev branch has been force-synced to match main at commit **${MAIN_SHA}**.\\n\\nDev and main are now in Sync.\\n\\n[View repository](${REPO_URL})"
               }
             ]
           }
