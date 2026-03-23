@@ -33,12 +33,12 @@ jobs:
           {
             "@type": "MessageCard",
             "@context": "http://schema.org/extensions",
-            "summary": "Dev Branch Sync - 2 Hour Warning",
+            "summary": "data-engineering-services Sync - 2 Hour Warning",
             "themeColor": "FFA500",
-            "title": "Dev Branch Sync - 2 Hour Warning",
+            "title": "data-engineering-services Sync - 2 Hour Warning",
             "sections": [
               {
-                "text": "The automated dev branch sync is scheduled to run in **2 hours** (12 PM EDT).\n\nPlease ensure any in-flight PRs targeting dev are either merged or accounted for.\n\nIf code differences exist between dev and main, the sync will be stopped and the team will be notified."
+                "text": "The automated main to dev branch sync is scheduled to run in **2 hours** (12 PM EDT).\n\nPlease ensure any in-flight PRs targeting dev are either merged or accounted for.\n\nIf code differences exist between dev and main, the sync will be stopped and the team will be notified."
               }
             ]
           }
@@ -114,9 +114,9 @@ jobs:
           {
             "@type": "MessageCard",
             "@context": "http://schema.org/extensions",
-            "summary": "Dev Branch Sync - BLOCKED",
+            "summary": "data-engineering-services Sync - BLOCKED",
             "themeColor": "FF0000",
-            "title": "Dev Branch Sync - BLOCKED",
+            "title": "data-engineering-services Sync - BLOCKED",
             "sections": [
               {
                 "text": "The sync has been **stopped** because **${FILE_COUNT} file(s)** have code differences between main and dev.\\n\\n**Changed files:**\\n${CHANGED_FILES}\\n\\nPlease resolve these differences before the next scheduled sync.\\n\\n[View full comparison](${REPO_URL}/compare/main...dev)"
