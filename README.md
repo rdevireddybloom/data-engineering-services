@@ -6,7 +6,7 @@ Central repository for all Data Engineering team's infrastructure, services, and
 
 - **.github/workflows/** - CI/CD pipelines
 - **common/** - Shared resources (Lambda layers, Glue libs, configs)
-- **	erraform/** - Terraform infrastructure configs
+- **Terraform/** - Terraform infrastructure configs
   - modules/ - Reusable Terraform templates
   - infrastructure/ - Central infrastructure (S3, IAM, networking)
 - **services/** - Standard, reusable DE processes
