@@ -25,7 +25,32 @@ jobs:
       github.event.schedule == '0 14 * * 1' ||
       (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'warning')
     steps:
-      - name: Send warning to Teams
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch latest branches
+        run: |
+          git fetch origin main
+          git fetch origin dev
+
+      - name: Check for code differences
+        id: diff_check
+        run: |
+          DIFF_OUTPUT=$(git diff origin/main..origin/dev --stat || true)
+
+          if [ -n "$DIFF_OUTPUT" ]; then
+            echo "has_diff=true" >> "$GITHUB_OUTPUT"
+            FILE_COUNT=$(git diff origin/main..origin/dev --name-only | wc -l)
+            echo "file_count=${FILE_COUNT}" >> "$GITHUB_OUTPUT"
+            git diff origin/main..origin/dev --name-only > /tmp/changed_files.txt
+          else
+            echo "has_diff=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Send warning to Teams (no diffs)
+        if: steps.diff_check.outputs.has_diff == 'false'
         env:
           TEAMS_WEBHOOK_URL: ${{ secrets.TEAMS_WEBHOOK_URL }}
         run: |
@@ -38,16 +63,44 @@ jobs:
             "title": "data-engineering-services Repo Sync - 2 Hour Warning",
             "sections": [
               {
-                "text": "The automated data-engineering-services Repo Sync between dev and main is scheduled to run in **2 hours** (12 PM EDT).\n\nPlease ensure any in-flight PRs targeting dev are either merged or accounted for.\n\nIf code differences exist between dev and main, the sync will be stopped and the team will be notified."
+                "text": "The automated data-engineering-services Repo Sync between dev and main is scheduled to run in **2 hours** (12 PM EDT).\n\nNo code differences detected between main and dev. Sync should proceed cleanly.\n\nPlease ensure any in-flight PRs targeting dev are either merged or accounted for."
               }
             ]
           }
           EOF
 
-          curl -s -o /dev/null -w "%{http_code}" \
-            -H "Content-Type: application/json" \
-            -d @payload.json \
-            "$TEAMS_WEBHOOK_URL"
+          curl -s -H "Content-Type: application/json" -d @payload.json "$TEAMS_WEBHOOK_URL"
+
+      - name: Send warning to Teams (diffs found)
+        if: steps.diff_check.outputs.has_diff == 'true'
+        env:
+          TEAMS_WEBHOOK_URL: ${{ secrets.TEAMS_WEBHOOK_URL }}
+          FILE_COUNT: ${{ steps.diff_check.outputs.file_count }}
+          REPO_URL: ${{ github.server_url }}/${{ github.repository }}
+        run: |
+          CHANGED_FILES=$(cat /tmp/changed_files.txt | head -20 | sed 's/^/- /' | tr '\n' '\\' | sed 's/\\/\\n/g')
+
+          TOTAL_FILES=$(cat /tmp/changed_files.txt | wc -l)
+          if [ "$TOTAL_FILES" -gt 20 ]; then
+            CHANGED_FILES="${CHANGED_FILES}\\n- ... and $((TOTAL_FILES - 20)) more files"
+          fi
+
+          cat <<EOF > payload.json
+          {
+            "@type": "MessageCard",
+            "@context": "http://schema.org/extensions",
+            "summary": "data-engineering-services Repo Sync - 2 Hour Warning (Code Diffs Detected)",
+            "themeColor": "FF0000",
+            "title": "data-engineering-services Repo Sync - 2 Hour Warning (Code Diffs Detected)",
+            "sections": [
+              {
+                "text": "The automated data-engineering-services Repo Sync between dev and main is scheduled to run in **2 hours** (12 PM EDT).\\n\\n**${FILE_COUNT} file(s)** have code differences between main and dev. The sync will be **blocked** unless these are resolved.\\n\\n**Changed files:**\\n${CHANGED_FILES}\\n\\n[View full comparison](${REPO_URL}/compare/main...dev)"
+              }
+            ]
+          }
+          EOF
+
+          curl -s -H "Content-Type: application/json" -d @payload.json "$TEAMS_WEBHOOK_URL"
 
 # -----------------------------------------------------------------------------
 # Job 2: Sync Execution
@@ -155,9 +208,9 @@ jobs:
           {
             "@type": "MessageCard",
             "@context": "http://schema.org/extensions",
-            "summary": "data-engineering-services Sync - Complete",
+            "summary": "data-engineering-services Repo Sync - Complete",
             "themeColor": "00FF00",
-            "title": "data-engineering-services Sync - Complete",
+            "title": "data-engineering-services Repo Sync - Complete",
             "sections": [
               {
                 "text": "The dev branch has been force-synced to match main at commit **${MAIN_SHA}**.\\n\\nDev and main are now identical.\\n\\n[View repository](${REPO_URL})"
